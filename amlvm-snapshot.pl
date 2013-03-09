@@ -25,10 +25,9 @@
 #    LVREMOVE-PATH
 #    VGDISPLAY-PATH
 #
-#    STABLE-MOUNTPOINT
 #    SUDO
 #
-use lib '/usr/local/share/perl/5.8.4';
+use lib '/usr/lib/perl5/vendor_perl/5.16.2';
 use strict;
 use Getopt::Long;
 
@@ -305,12 +304,16 @@ sub scan_mtab {
     my $self = shift;
     my $sub = shift;
 
+# lines start with "systemd-1" in gentoo (or with systemd in general, so we filter for
+# lines starting with "/dev/mapper" explicitly here. @sgw
+    my $dev_regex = "/dev/mapper";
+
     open(MTAB, "/etc/mtab");
     my $line;
     my $result;
     while ($line = <MTAB>) {
         chomp($line);
-        my ($device, $directory, $type) = split(/\s+/, $line);
+        my ($device, $directory, $type) = split(/\s+/, $line) if $line =~/$dev_regex/;
         $result = $sub->($self->readlink($device), $directory, $type);
         last if ($result);
     }
